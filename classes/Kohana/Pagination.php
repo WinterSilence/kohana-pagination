@@ -156,7 +156,7 @@ abstract class Kohana_Pagination {
 	 * @param  integer $page Page number
 	 * @return string
 	 */
-	public function url($page = 1)
+	public function uri($page = 1)
 	{
 		// Clean the page number
 		$page = min($this->_total_pages, max(1, (int) $page));

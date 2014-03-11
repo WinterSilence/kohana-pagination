@@ -1,5 +1,5 @@
 ##Pagination
----
+
 Navigation module for Kohana framework 3.3 or high.
 
 Provide pagination links for your applications with the multi-page pagination component, 
@@ -36,12 +36,12 @@ class Controller_News extends Controller_Template {
 		);
 
 		// Find news for display on the current page
-		$news = $news->limit($pagination->items_per_page)
+		$news_list = $news->limit($pagination->items_per_page)
 			->offset($pagination->offset)
 			->find_all();
 
 		// Send news and pagination object in template (View)
-		$this->template->news_list = $news;
+		$this->template->news_list = $news_list;
 		$this->template->pagination = $pagination;
 	}
 
