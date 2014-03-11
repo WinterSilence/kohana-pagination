@@ -1,32 +1,33 @@
 {
-	"name": "shadowhand/pagination",
-	"type": "kohana-module",
-	"description": "A Kohana module for pagination.",
-	"homepage": "http://kohanaframework.org",
-	"license": "BSD-3-Clause",
-	"keywords": ["kohana", "pagination"],
+	"name":        "kohana/pagination",
+	"type":        "kohana-module",
+	"description": "The pagination module for Kohana framework.",
+	"homepage":    "http://kohanaframework.org",
+	"license":     "BSD-3-Clause",
+	"keywords":    ["kohana", "framework", "pagination"],
 	"authors": [
 		{
-			"name": "Woody Gilk (shadowhand)",
-			"email": "woody@wingsc.com",
-			"homepage": "http://wingsc.com/",
-			"role": "developer"
+			"name":     "Kohana Team",
+			"email":    "team@kohanaframework.org",
+			"homepage": "http://kohanaframework.org/team",
+			"role":     "developer"
 		}
 	],
 	"support": {
-		"forum": "http://forum.kohanaframework.org",
-		"irc": "irc://irc.freenode.net/kohana",
-		"source": "https://github.com/shadowhand/pagination"
+		"issues": "http://dev.kohanaframework.org",
+		"forum":  "http://forum.kohanaframework.org",
+		"irc":    "irc://irc.freenode.net/kohana",
+		"source": "http://github.com/kohana/core"
 	},
 	"require": {
 		"composer/installers": "~1.0",
-		"kohana/core": ">=3.3",
-		"php": ">=5.3.3"
+		"kohana/core":         ">=3.3",
+		"php":                 ">=5.4"
 	},
 	"extra": {
 		"branch-alias": {
-			"dev-3.2/develop": "3.2.x-dev",
-			"dev-3.3/develop": "3.3.x-dev"
+			"dev-3.3/develop": "3.3.x-dev",
+			"dev-3.4/develop": "3.4.x-dev"
 		}
 	}
 }
