@@ -173,12 +173,12 @@ abstract class Kohana_Pagination {
 		{
 			$query = array($this->_config['current_page']['key'] => $page);
 
-			return $this->_route->uri($param).URL::query($query);
+			return $this->_request->route()->uri($param).URL::query($query);
 		}
 
 		$param[$this->_config['current_page']['key']] = $page;
 
-		return $this->_route->uri($param).URL::query();
+		return $this->_request->route()->uri($param).URL::query();
 	}
 
 	/**
