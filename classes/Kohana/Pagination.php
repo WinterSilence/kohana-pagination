@@ -1,12 +1,12 @@
 <?php defined('SYSPATH') OR die('No direct script access.');
 /**
- * Pagination links generator.
+ * Base class, generates pagination links.
  *
- * @package    Kohana/Pagination
- * @category   Base
- * @author     Kohana Team
- * @copyright  (c) 2008-2014 Kohana Team
- * @license    http://kohanaphp.com/license.html
+ * @package   Kohana/Pagination
+ * @category  Base
+ * @author    Kohana Team
+ * @copyright (c) 2008-2014 Kohana Team
+ * @license   http://kohanaframework.org/license
  */
 abstract class Kohana_Pagination {
 
@@ -19,7 +19,7 @@ abstract class Kohana_Pagination {
 	 * @val array Configuration settings
 	 */
 	protected $_config = array(
-		'current_page'      => array('source' => 'query', 'key' => 'page'), 
+		'page'      => array('source' => 'query', 'key' => 'page'), 
 		'items_per_page'    => 10,
 		'auto_hide'         => TRUE,
 		'first_page_in_url' => FALSE,
@@ -72,9 +72,19 @@ abstract class Kohana_Pagination {
 	protected $_offset;
 
 	/**
-	 * @val Request [Request] object, used for create page links 
+	 * Marker replaced with the actual page number
 	 */
-	protected $_request;
+	const PAGE_MARKER = '10101';
+
+	/**
+	 * @val string Pattern for generating links
+	 */
+	protected $uri_pattern;
+
+	/**
+	 * @val string Link to first page, used if `config['first_page_in_uri']` set as FALSE
+	 */
+	protected $first_page_uri;
 
 	/**
 	 * Creates new object instance.
@@ -109,33 +119,54 @@ abstract class Kohana_Pagination {
 	 */
 	protected function __construct($total_items, $group, Request $request)
 	{
-		//
+		// Load config group
 		$config = Kohana::$config->load('pagination')->get($group);
-
+		// If group not exist, throw exception
 		if ($config === NULL)
 		{
-			//
 			throw new Kohana_Exception(
 				':method: config group `pagination.:group` does not exist',
 				array(':method' => __METHOD__, ':group' => $group)
 			);
 		}
-
-		// 
+		// Merge base and group configs
 		$this->_config = array_merge($this->_config, $config);
 
-		// Retrieve the current page number
-		$page_key = $this->_config['current_page']['key'];
-		if ($this->_config['current_page']['source'] == 'query')
+		// Get request options
+		$params = $request->param();
+		$query  = $request->query();
+
+		$page_key = $this->_config['page']['key'];
+
+		if ($this->_config['page']['source'] == 'query')
 		{
 			$this->_current_page = (int) $request->query($page_key, 1);
+			$query[$page_key] = Pagination::PAGE_MARKER;
 		}
 		else
 		{
 			$this->_current_page = (int) $request->param($page_key, 1);
+			$params[$page_key] = Pagination::PAGE_MARKER;
 		}
 
-		// Calculate and clean all pagination variables
+		// Create pattern to quickly generating links
+		$this->uri_pattern = $request->route()->uri($params).URL::query($query, FALSE);
+
+		// Create link for for extra case: first page not displayed
+		if ( ! $this->_config['first_page_in_uri'])
+		{
+			if ($this->_config['page']['source'] == 'query')
+			{
+				unset($query[$page_key]);
+			}
+			else
+			{
+				$params[$page_key] = NULL;
+			}
+			$this->first_page_uri = $request->route()->uri($params).URL::query($query, FALSE);
+		}
+
+		// Calculate pagination properties
 		$this->_total_items    = max(0,  (int) $total_items);
 		$this->_items_per_page = max(1, (int) $this->_config['items_per_page']);
 		$this->_total_pages    = max(1, ceil($this->_total_items / $this->_items_per_page));
@@ -145,13 +176,10 @@ abstract class Kohana_Pagination {
 		$this->_first_page     = ($this->_current_page === 1 ? FALSE : 1);
 		$this->_last_page      = ($this->_current_page >= $this->_total_pages ? FALSE : $this->_total_pages);
 		$this->_offset         = (($this->_current_page - 1) * $this->_items_per_page);
-
-		// 
-		$this->_request = $request;
 	}
 
 	/**
-	 * Generates and return the URI for a certain page.
+	 * Generates link for page.
 	 *
 	 * @param  integer $page Page number
 	 * @return string
@@ -161,24 +189,14 @@ abstract class Kohana_Pagination {
 		// Clean the page number
 		$page = min($this->_total_pages, max(1, (int) $page));
 
-		// No page number in URLs to first page
-		if ($page === 1 AND ! $this->_config['first_page_in_url'])
+		if ($page == 1 AND ! $this->_config['first_page_in_uri'])
 		{
-			$page = NULL;
+			// Not page number in URI to first page
+			return $this->first_page_uri;
 		}
 
-		$param = $this->_request->param();
-
-		if ($this->_config['current_page']['source'] == 'query')
-		{
-			$query = array($this->_config['current_page']['key'] => $page);
-
-			return $this->_request->route()->uri($param).URL::query($query);
-		}
-
-		$param[$this->_config['current_page']['key']] = $page;
-
-		return $this->_request->route()->uri($param).URL::query();
+		// Substitutes the page number in pattern
+		return str_replace(Pagination::PAGE_MARKER, $page, $this->uri_pattern);
 	}
 
 	/**
@@ -217,7 +235,7 @@ abstract class Kohana_Pagination {
 		}
 
 		// Send self in template and compile him
-		return $view->set('pagination', $this)->render();
+		return $view->set('k_pagination', $this)->render();
 	}
 
 	/**

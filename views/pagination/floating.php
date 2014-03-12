@@ -4,21 +4,21 @@
 */
 
 // Number of page links in the begin and end of whole range
-$count_out = (isset($pagination->config['count_out']) ? $pagination->config['count_out'] : 3);
+$count_out = (isset($k_pagination->config['count_out']) ? $k_pagination->config['count_out'] : 3);
 // Number of page links on each side of current page
-$count_in = (isset($pagination->config['count_in']) ? $pagination->config['count_in'] : 5);
+$count_in = (isset($k_pagination->config['count_in']) ? $k_pagination->config['count_in'] : 5);
 
 // Beginning group of pages: $n1...$n2
 $n1 = 1;
-$n2 = min($count_out, $pagination->total_pages);
+$n2 = min($count_out, $k_pagination->total_pages);
 
 // Ending group of pages: $n7...$n8
-$n7 = max(1, $pagination->total_pages - $count_out + 1);
-$n8 = $pagination->total_pages;
+$n7 = max(1, $k_pagination->total_pages - $count_out + 1);
+$n8 = $k_pagination->total_pages;
 
 // Middle group of pages: $n4...$n5
-$n4 = max($n2 + 1, $pagination->current_page - $count_in);
-$n5 = min($n7 - 1, $pagination->current_page + $count_in);
+$n4 = max($n2 + 1, $k_pagination->current_page - $count_in);
+$n5 = min($n7 - 1, $k_pagination->current_page + $count_in);
 $use_middle = ($n5 >= $n4);
 
 // Point $n3 between $n2 and $n4
@@ -56,36 +56,36 @@ for ($i = $n7; $i <= $n8; $i++)
 ?>
 <p class="pagination">
 
-<?php if ($pagination->first_page !== FALSE): ?>
-	<?php echo HTML::anchor($pagination->uri($pagination->first_page), __('First')) ?>
+<?php if ($k_pagination->first_page !== FALSE): ?>
+	<?php echo HTML::anchor($k_pagination->uri($k_pagination->first_page), __('First')) ?>
 <?php else: ?>
 	<?php echo __('First') ?>
 <?php endif ?>
 
 <?php if ($previous_page !== FALSE): ?>
-	<?php echo HTML::anchor($pagination->uri($pagination->previous_page), __('Previous')) ?>
+	<?php echo HTML::anchor($k_pagination->uri($k_pagination->previous_page), __('Previous')) ?>
 <?php else: ?>
 	<?php echo __('Previous') ?>
 <?php endif ?>
 
 <?php foreach ($links as $number => $content): ?>
 
-	<?php if ($number === $pagination->current_page): ?>
+	<?php if ($number === $k_pagination->current_page): ?>
 		<strong><?php echo $content ?></strong>
 	<?php else: ?>
-		<?php echo HTML::anchor($pagination->uri($number), $content) ?>
+		<?php echo HTML::anchor($k_pagination->uri($number), $content) ?>
 	<?php endif ?>
 
 <?php endforeach ?>
 
-<?php if ($pagination->next_page !== FALSE): ?>
-	<?php echo HTML::anchor($pagination->uri($pagination->next_page), __('Next')) ?>
+<?php if ($k_pagination->next_page !== FALSE): ?>
+	<?php echo HTML::anchor($k_pagination->uri($k_pagination->next_page), __('Next')) ?>
 <?php else: ?>
 	<?php echo __('Next') ?>
 <?php endif ?>
 
-<?php if ($pagination->last_page !== FALSE): ?>
-	<?php echo HTML::anchor($pagination->uri($pagination->last_page), __('Last')) ?>
+<?php if ($k_pagination->last_page !== FALSE): ?>
+	<?php echo HTML::anchor($k_pagination->uri($k_pagination->last_page), __('Last')) ?>
 <?php else: ?>
 	<?php echo __('Last') ?>
 <?php endif ?>
