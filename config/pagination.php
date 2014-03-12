@@ -18,7 +18,7 @@ return array(
 	/* 
 	Group - example:
 	'floating' => array(
-		'current_page'      => array('source' => 'query', 'key' => 'page'), 
+		'current_page'      => array('source' => 'param', 'key' => 'page'), 
 		'items_per_page'    => 20,
 		'auto_hide'         => TRUE,
 		'first_page_in_url' => TRUE,
