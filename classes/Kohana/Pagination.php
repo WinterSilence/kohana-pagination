@@ -173,15 +173,15 @@ abstract class Kohana_Pagination {
 		}
 
 		// Calculate pagination properties
-		$this->_total_items    = max(0,  (int) $total_items);
+		$this->_total_items    = max(0, (int) $total_items);
 		$this->_items_per_page = max(1, (int) $this->_config['items_per_page']);
 		$this->_total_pages    = max(1, ceil($this->_total_items / $this->_items_per_page));
 		$this->_current_page   = min(max(1, (int) $this->_current_page), $this->_total_pages);
-		$this->_previous_page  = ($this->_current_page > 1 ? ($this->_current_page - 1) : FALSE);
-		$this->_next_page      = ($this->_current_page < $this->_total_pages ? ($this->_current_page + 1) : FALSE);
-		$this->_first_page     = ($this->_current_page === 1 ? FALSE : 1);
-		$this->_last_page      = ($this->_current_page >= $this->_total_pages ? FALSE : $this->_total_pages);
-		$this->_offset         = (($this->_current_page - 1) * $this->_items_per_page);
+		$this->_previous_page  = $this->_current_page > 1 ? $this->_current_page - 1 : FALSE;
+		$this->_next_page      = $this->_current_page < $this->_total_pages ? $this->_current_page + 1 : FALSE;
+		$this->_first_page     = $this->_current_page == 1 ? FALSE : 1;
+		$this->_last_page      = $this->_current_page >= $this->_total_pages ? FALSE : $this->_total_pages;
+		$this->_offset         = ($this->_current_page - 1) * $this->_items_per_page;
 	}
 
 	/**
@@ -213,7 +213,7 @@ abstract class Kohana_Pagination {
 	 */
 	public function valid_page($page)
 	{
-		return (Valid::digit($page) AND $page > 0 AND $page <= $this->_total_pages);
+		return Valid::digit($page) AND $page > 0 AND $page <= $this->_total_pages;
 	}
 
 	/**
@@ -252,7 +252,7 @@ abstract class Kohana_Pagination {
 		// Add 'protected' prefix 
 		$key = '_'.$key;
 
-		return (isset($this->$key) ? $this->$key : $default);
+		return isset($this->$key) ? $this->$key : $default;
 	}
 
 	/**
@@ -264,7 +264,7 @@ abstract class Kohana_Pagination {
 	 */
 	public function config($key, $default = NULL)
 	{
-		return (isset($this->_config[$key]) ? $this->_config[$key] : $default);
+		return isset($this->_config[$key]) ? $this->_config[$key] : $default;
 	}
 
 	/**

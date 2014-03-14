@@ -1,4 +1,4 @@
-#HMVC usage
+# HMVC usage
 
 Add [Route] for [Controller_Pagination] in [bootstrap file](../kohana/bootstrap):
 ~~~

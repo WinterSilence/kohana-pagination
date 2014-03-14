@@ -8,7 +8,7 @@ return array(
 		'page'              => array('source' => 'query', 'key' => 'page'), 
 		'items_per_page'    => 10,
 		'auto_hide'         => TRUE,
-		'first_page_in_uri' => FALSE,
+		'first_page_in_url' => FALSE,
 		'view'              => 'pagination/basic',
 		'class'             => ''
 		*/

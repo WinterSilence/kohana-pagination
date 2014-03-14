@@ -34,7 +34,7 @@ abstract class Kohana_Controller_Pagination extends Controller {
 		$this->response->body($pagination->render());
 
 		// If cache is enabled, check browser cache using [ETag](http://wikipedia.org/wiki/HTTP_ETag)
-		if ($this->_check_cache === TRUE)
+		if (Kohana::$caching === TRUE AND $this->_check_cache === TRUE)
 		{
 			$tag = sha1($this->request->referrer().$this->request->uri());
 			$this->check_cache($tag);
