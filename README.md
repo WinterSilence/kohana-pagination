@@ -1,13 +1,12 @@
-##Pagination
+## Pagination
 
 Navigation module for Kohana framework 3.3 or high.
 
-Provide pagination links for your applications with the multi-page pagination component, 
-or the simpler pager alternative.
+Provide pagination links for your applications with the multi-page pagination component.
 
-###Usage example
+### Usage example
 
-Controller class `Controller_News`:
+Controller `application/classes/Controller/News.php`:
 ~~~
 <?php defined('SYSPATH') OR die('No direct script access.');
 /**
@@ -26,12 +25,12 @@ class Controller_News extends Controller_Template {
 			->reset(FALSE);
 
 		// Get the number of news
-		$amount_news = $news->count_all();
+		$total_news = $news->count_all();
 
 		// Create Pagination object
 		$pagination = Pagination::factory(
-			$amount_news,  // Total news
-			'small',       // Group name of config. If set as NULL or not set, uses `Pagination::$default`.
+			$total_news,   // Number of news
+			'small',       // Name of config group. If it's undefined, sets in `Pagination::$default`.
 			$this->request // Current Request object, uses for for generating links.
 		);
 
@@ -47,14 +46,15 @@ class Controller_News extends Controller_Template {
 
 }
 ~~~
-View template `news/list`:
+
+View `application/views/news/list.php`:
 ~~~
 <?php defined('SYSPATH') OR die('No direct script access.') ?>
 
 <h3><?php echo __('News list') ?></h3>
 
-<div class="pagination headed">
-	<?php echo $pagination->render(/* string $different_template */) ?>
+<div class="pagination footer">
+	<?php echo $pagination; // 'Magical' calling `$pagination->render()` ?>
 </div>
 
 <ul class="list news">
@@ -66,8 +66,7 @@ View template `news/list`:
 <?php endforeach ?>
 </ul>
 
-<div class="pagination footer">
-	<?php echo $pagination; // `Magic` calling $pagination->render() ?>
+<div class="pagination headed">
+	<?php echo $pagination->render(/* string $different_template */) ?>
 </div>
-
 ~~~

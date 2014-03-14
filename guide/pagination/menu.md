@@ -1,5 +1,6 @@
 ## [Pagination]()
  - [Setup](setup)
+ - [Configuration](config)
  - [Usage]()
   - [Basic](usage/basic)
    - [HMVC](usage/hmvc)

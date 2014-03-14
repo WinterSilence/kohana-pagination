@@ -1,6 +1,6 @@
 #HMVC usage
 
-Add [Route] for [Controller_Pagination] in [bootstrap file](kohana/bootstrap):
+Add [Route] for [Controller_Pagination] in [bootstrap file](../kohana/bootstrap):
 ~~~
 Route::set(
 	'paginate', 
@@ -15,7 +15,7 @@ Route::set(
 	));
 ~~~
 
-Create and execute [HMVC request](kohana/requests) to [Controller_Pagination] in [View] templates.
+Create and execute [HMVC request](../kohana/requests) to [Controller_Pagination] in [View] templates.
 
 Minimal request:
 ~~~
@@ -26,7 +26,8 @@ Minimal request:
 </ul>
 
 <div class="navigation">
-	<?php echo Request::factory(Route::url('paginate', array('total_items' => $total)))->execute() ?>
+	<?php $url = Route::url('paginate', array('total_items' => $total));
+		echo Request::factory($url)->execute() ?>
 </div>
 ~~~
 

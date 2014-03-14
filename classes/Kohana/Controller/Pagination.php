@@ -1,20 +1,7 @@
 <?php defined('SYSPATH') OR die('No direct script access.');
 /**
- * Controller class, creates [HMVC](http://wikipedia.org/wiki/HMVC) layer containing pagination links.
- *
- * [!!] Add [Route] for using this controller:
- * 
- *     Route::set(
- *         'paginate', 
- *         'paginate/<total_items>(/<config_group>)', 
- *         array('total_items' => '[0-9]+', 'config_group' => '[-\w]+')
- *     )
- *         ->default(array(
- *             'controller'   => 'Pagination',
- *             'action'       => 'index',
- *             'total_items'  => 0,
- *             'config_group' => NULL
- *         ));
+ * Controller class, creates [HMVC triad](http://wikipedia.org/wiki/HMVC) containing of pagination links. 
+ * For more information, see [guide](pagination/usage/hmvc).
  *
  * @package   Kohana/Pagination
  * @category  Controller

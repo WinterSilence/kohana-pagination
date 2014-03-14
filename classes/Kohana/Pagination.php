@@ -11,94 +11,95 @@
 abstract class Kohana_Pagination {
 
 	/**
-	 * @val string Configuration group by default
-	 */
-	public static $default = 'default';
-
-	/**
-	 * @val array Configuration settings
-	 */
-	protected $_config = array(
-		'page'      => array('source' => 'query', 'key' => 'page'), 
-		'items_per_page'    => 10,
-		'auto_hide'         => TRUE,
-		'first_page_in_url' => FALSE,
-		'view'              => 'pagination/basic',
-	),
-
-	/**
-	 * @val integer Current page number
-	 */
-	protected $_current_page;
-
-	/**
-	 * @val integer Total item count
-	 */
-	protected $_total_items;
-
-	/**
-	 * @val integer Number of items to show per page
-	 */
-	protected $_items_per_page;
-
-	/**
-	 * @val integer Total page count
-	 */
-	protected $_total_pages;
-
-	/**
-	 * @val integer Previous page number, sets in FALSE if the current page is the first one
-	 */
-	protected $_previous_page;
-
-	/**
-	 * @val integer|boolean Next page number, sets in FALSE if the current page is the last one
-	 */
-	protected $_next_page;
-
-	/**
-	 * @val integer|boolean First page number, sets in FALSE if the current page is the first one
-	 */
-	protected $_first_page;
-
-	/**
-	 * @val integer|boolean Last page number, sets in FALSE if the current page is the last one
-	 */
-	protected $_last_page;
-
-	/**
-	 * @val integer Query offset
-	 */
-	protected $_offset;
-
-	/**
-	 * Marker replaced with the actual page number
+	 * Marker replaced with the actual page number, uses to quickly create links
 	 */
 	const PAGE_MARKER = '10101';
 
 	/**
-	 * @val string Pattern for generating links
+	 * @var string Configuration group by default
 	 */
-	protected $uri_pattern;
+	public static $default = 'default';
 
 	/**
-	 * @val string Link to first page, used if `config['first_page_in_uri']` set as FALSE
+	 * @var array Current [configuration options](pagination/config)
 	 */
-	protected $first_page_uri;
+	protected $_config = array(
+		'page'              => array('source' => 'query', 'key' => 'page'), 
+		'items_per_page'    => 10,
+		'auto_hide'         => TRUE,
+		'first_page_in_url' => FALSE,
+		'view'              => 'pagination/basic',
+		'class'             => '',
+	);
 
 	/**
-	 * Creates new object instance.
-	 *
-	 * @param  integer      $total_items Total items in list
-	 * @param  string|NULL  $group       Config group name
-	 * @param  Request|NULL $request     HTTP request
+	 * @var string Pattern for generating links, uses to quickly create link
+	 */
+	protected $url_pattern;
+
+	/**
+	 * @var string Link to first page, is set, if Pagination::$_config['first_page_in_url'] is FALSE
+	 */
+	protected $url_first_page;
+
+	/**
+	 * @var integer Current page number
+	 */
+	protected $_current_page;
+
+	/**
+	 * @var integer Total item count
+	 */
+	protected $_total_items;
+
+	/**
+	 * @var integer Number of items to show per page
+	 */
+	protected $_items_per_page;
+
+	/**
+	 * @var integer Total page count
+	 */
+	protected $_total_pages;
+
+	/**
+	 * @var integer Previous page number, sets in FALSE if the current page is the first one
+	 */
+	protected $_previous_page;
+
+	/**
+	 * @var integer|boolean Next page number, sets in FALSE if the current page is the last one
+	 */
+	protected $_next_page;
+
+	/**
+	 * @var integer|boolean First page number, sets in FALSE if the current page is the first one
+	 */
+	protected $_first_page;
+
+	/**
+	 * @var integer|boolean Last page number, sets in FALSE if the current page is the last one
+	 */
+	protected $_last_page;
+
+	/**
+	 * @var integer Query offset
+	 */
+	protected $_offset;
+
+	/**
+	 * Create new object instance.
+	 * 
+	 * @param  integer      $total_items  Total number of items in the list
+	 * @param  string|NULL  $config_group Name of config group
+	 * @param  Request|NULL $request      HTTP request
 	 * @return Pagination
 	 */
-	public static function factory($total_items, $group = NULL, Request $request = NULL)
+	public static function factory($total_items, $config_group = NULL, Request $request = NULL)
 	{
-		if ($group === NULL)
+		if ($config_group === NULL)
 		{
-			$group = Pagination::$default;
+			$config_group = Pagination::$default;
 		}
 
 		if ($request === NULL)
@@ -106,54 +107,59 @@ abstract class Kohana_Pagination {
 			$request = Request::initial();
 		}
 
-		return new Pagination($total_items, $config, $request);
+		return new Pagination($total_items, $config_group, $request);
 	}
 
 	/**
 	 * Initializes base properties.
-	 *
-	 * @param  integer $total_items Total items in list
-	 * @param  string  $group       Config group name
-	 * @param  Request $request     HTTP request
+	 * 
+	 * @param  integer $total_items  Total items in list
+	 * @param  string  $config_group Name of config group 
+	 * @param  Request $request      HTTP request
 	 * @return void
 	 */
-	protected function __construct($total_items, $group, Request $request)
+	protected function __construct($total_items, $config_group, Request $request)
 	{
 		// Load config group
-		$config = Kohana::$config->load('pagination')->get($group);
+		$config = Kohana::$config->load('pagination')->get($config_group);
 		// If group not exist, throw exception
 		if ($config === NULL)
 		{
 			throw new Kohana_Exception(
 				':method: config group `pagination.:group` does not exist',
-				array(':method' => __METHOD__, ':group' => $group)
+				array(':method' => __METHOD__, ':group' => $config_group)
 			);
 		}
 		// Merge base and group configs
 		$this->_config = array_merge($this->_config, $config);
 
-		// Get request options
-		$params = $request->param();
+		// 
 		$query  = $request->query();
+		$params = $request->param();
+
+		// 
+		$params['directory']  = strtolower($request->directory());
+		$params['controller'] = strtolower($request->controller());
+		$params['action']     = strtolower($request->action());
 
 		$page_key = $this->_config['page']['key'];
 
 		if ($this->_config['page']['source'] == 'query')
 		{
-			$this->_current_page = (int) $request->query($page_key, 1);
+			$this->_current_page = $request->query($page_key);
 			$query[$page_key] = Pagination::PAGE_MARKER;
 		}
 		else
 		{
-			$this->_current_page = (int) $request->param($page_key, 1);
+			$this->_current_page = $request->param($page_key);
 			$params[$page_key] = Pagination::PAGE_MARKER;
 		}
 
 		// Create pattern to quickly generating links
-		$this->uri_pattern = $request->route()->uri($params).URL::query($query, FALSE);
+		$this->url_pattern = $request->route()->uri($params).URL::query($query, FALSE);
 
 		// Create link for for extra case: first page not displayed
-		if ( ! $this->_config['first_page_in_uri'])
+		if ( ! $this->_config['first_page_in_url'])
 		{
 			if ($this->_config['page']['source'] == 'query')
 			{
@@ -161,9 +167,9 @@ abstract class Kohana_Pagination {
 			}
 			else
 			{
-				$params[$page_key] = NULL;
+				unset($params[$page_key]);
 			}
-			$this->first_page_uri = $request->route()->uri($params).URL::query($query, FALSE);
+			$this->url_first_page = $request->route()->uri($params).URL::query($query, FALSE);
 		}
 
 		// Calculate pagination properties
@@ -184,19 +190,19 @@ abstract class Kohana_Pagination {
 	 * @param  integer $page Page number
 	 * @return string
 	 */
-	public function uri($page = 1)
+	public function url($page = 1)
 	{
 		// Clean the page number
 		$page = min($this->_total_pages, max(1, (int) $page));
 
-		if ($page == 1 AND ! $this->_config['first_page_in_uri'])
+		if ($page == 1 AND ! $this->_config['first_page_in_url'])
 		{
 			// Not page number in URI to first page
-			return $this->first_page_uri;
+			return $this->url_first_page;
 		}
 
 		// Substitutes the page number in pattern
-		return str_replace(Pagination::PAGE_MARKER, $page, $this->uri_pattern);
+		return str_replace(Pagination::PAGE_MARKER, $page, $this->url_pattern);
 	}
 
 	/**
@@ -211,9 +217,9 @@ abstract class Kohana_Pagination {
 	}
 
 	/**
-	 * Renders and returns the HTML code of pagination links.
+	 * Return compiled the HTML code of pagination links.
 	 * 
-	 * @param  mixed $view [View] filename or object or NULL for use default filename
+	 * @param  string|NULL $view Filename
 	 * @return string
 	 */
 	public function render($view = NULL)
@@ -224,18 +230,41 @@ abstract class Kohana_Pagination {
 			return '';
 		}
 
-		if ( ! $view instanceof View)
+		if ($view === NULL)
 		{
-			if ($view === NULL)
-			{
-				// By default uses view filename from config
-				$view = $this->_config['view'];
-			}
-			$view = View::factory($view);
+			// Use default filename
+			$view = $this->_config['view'];
 		}
 
-		// Send self in template and compile him
-		return $view->set('k_pagination', $this)->render();
+		// Create and compile pagination [View]
+		return View::factory($view, array('kpagination' => $this))->render();
+	}
+
+	/**
+	 * Returns property value.
+	 *
+	 * @param  string $key     Property name
+	 * @param  mixed  $default Returned if the value is not found
+	 * @return mixed
+	 */
+	public function get($key, $default = NULL)
+	{
+		// Add 'protected' prefix 
+		$key = '_'.$key;
+
+		return (isset($this->$key) ? $this->$key : $default);
+	}
+
+	/**
+	 * Get config value.
+	 *
+	 * @param  string $key     Option name
+	 * @param  mixed  $default Returned if the value is not found
+	 * @return mixed
+	 */
+	public function config($key, $default = NULL)
+	{
+		return (isset($this->_config[$key]) ? $this->_config[$key] : $default);
 	}
 
 	/**
@@ -249,17 +278,14 @@ abstract class Kohana_Pagination {
 	}
 
 	/**
-	 * Returns property values.
+	 * 'Magical' version of property getter.
 	 *
 	 * @param  string $key Property name
 	 * @return mixed
 	 */
 	public function __get($key)
 	{
-		// Add prefix 'protected'
-		$key = '_'.$key;
-
-		return (isset($this->$key) ? $this->$key : NULL);
+		return $this->get($key);
 	}
 
 }
