@@ -1,7 +1,8 @@
 <?php defined('SYSPATH') OR die('No direct script access.');
 /**
- * Controller class, creates [HMVC triad](http://wikipedia.org/wiki/HMVC) containing of pagination links. 
- * For more information, see [guide](pagination/usage/hmvc).
+ * Controller class, creates [HMVC triad](http://wikipedia.org/wiki/HMVC) 
+ * containing of pagination links. 
+ * For more information, see [user guide](pagination/usage/hmvc).
  *
  * @package   Kohana/Pagination
  * @category  Controller
@@ -10,11 +11,6 @@
  * @license   http://kohanaframework.org/license
  */
 abstract class Kohana_Controller_Pagination extends Controller {
-
-	/**
-	 * @var boolean Whether to checks cache?
-	 */
-	protected $_check_cache = TRUE;
 
 	/**
 	 * Display pagination.
@@ -32,13 +28,6 @@ abstract class Kohana_Controller_Pagination extends Controller {
 
 		// Send compiled HTML code of pagination in [Response]
 		$this->response->body($pagination->render());
-
-		// If cache is enabled, check browser cache using [ETag](http://wikipedia.org/wiki/HTTP_ETag)
-		if (Kohana::$caching === TRUE AND $this->_check_cache === TRUE)
-		{
-			$tag = sha1($this->request->referrer().$this->request->uri());
-			$this->check_cache($tag);
-		}
 	}
 
 }
