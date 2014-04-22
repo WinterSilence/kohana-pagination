@@ -1,262 +1,276 @@
-<?php defined('SYSPATH') or die('No direct script access.');
+<?php defined('SYSPATH') OR die('No direct script access.');
 /**
- * Pagination links generator.
+ * Base class, generates pagination links.
  *
- * @package    Kohana/Pagination
- * @category   Base
- * @author     Kohana Team
- * @copyright  (c) 2008-2009 Kohana Team
- * @license    http://kohanaphp.com/license.html
+ * @package   Kohana/Pagination
+ * @category  Base
+ * @author    Kohana Team
+ * @copyright (c) 2008-2014 Kohana Team
+ * @license   http://kohanaframework.org/license
  */
-class Kohana_Pagination {
+abstract class Kohana_Pagination {
 
-	// Merged configuration settings
-	protected $config = array(
-		'current_page'      => array('source' => 'query_string', 'key' => 'page'),
-		'total_items'       => 0,
+	/**
+	 * Marker replaced with the actual page number, uses to quickly create links
+	 */
+	const PAGE_MARKER = '10101';
+
+	/**
+	 * @var string Configuration group by default
+	 */
+	public static $default = 'default';
+
+	/**
+	 * @var array Current [configuration options](pagination/config)
+	 */
+	protected $_config = array(
+		'page'              => array('source' => 'query', 'key' => 'page'), 
 		'items_per_page'    => 10,
-		'view'              => 'pagination/basic',
 		'auto_hide'         => TRUE,
 		'first_page_in_url' => FALSE,
+		'view'              => 'pagination/basic',
+		'class'             => '',
 	);
 
-	// Current page number
-	protected $current_page;
-
-	// Total item count
-	protected $total_items;
-
-	// How many items to show per page
-	protected $items_per_page;
-
-	// Total page count
-	protected $total_pages;
-
-	// Item offset for the first item displayed on the current page
-	protected $current_first_item;
-
-	// Item offset for the last item displayed on the current page
-	protected $current_last_item;
-
-	// Previous page number; FALSE if the current page is the first one
-	protected $previous_page;
-
-	// Next page number; FALSE if the current page is the last one
-	protected $next_page;
-
-	// First page number; FALSE if the current page is the first one
-	protected $first_page;
-
-	// Last page number; FALSE if the current page is the last one
-	protected $last_page;
-
-	// Query offset
-	protected $offset;
+	/**
+	 * @var string Pattern for generating links, uses to quickly create link
+	 */
+	protected $url_pattern;
 
 	/**
-	 * Creates a new Pagination object.
-	 *
-	 * @param   array  configuration
-	 * @return  Pagination
+	 * @var string Link to first page, is set, if Pagination::$_config['first_page_in_url'] is FALSE
 	 */
-	public static function factory(array $config = array())
-	{
-		return new Pagination($config);
-	}
+	protected $url_first_page;
 
 	/**
-	 * Creates a new Pagination object.
-	 *
-	 * @param   array  configuration
-	 * @return  void
+	 * @var integer Current page number
 	 */
-	public function __construct(array $config = array())
-	{
-		// Overwrite system defaults with application defaults
-		$this->config = $this->config_group() + $this->config;
-
-		// Pagination setup
-		$this->setup($config);
-	}
+	protected $_current_page;
 
 	/**
-	 * Retrieves a pagination config group from the config file. One config group can
-	 * refer to another as its parent, which will be recursively loaded.
-	 *
-	 * @param   string  pagination config group; "default" if none given
-	 * @return  array   config settings
+	 * @var integer Total item count
 	 */
-	public function config_group($group = 'default')
+	protected $_total_items;
+
+	/**
+	 * @var integer Number of items to show per page
+	 */
+	protected $_items_per_page;
+
+	/**
+	 * @var integer Total page count
+	 */
+	protected $_total_pages;
+
+	/**
+	 * @var integer Previous page number, sets in FALSE if the current page is the first one
+	 */
+	protected $_previous_page;
+
+	/**
+	 * @var integer|boolean Next page number, sets in FALSE if the current page is the last one
+	 */
+	protected $_next_page;
+
+	/**
+	 * @var integer|boolean First page number, sets in FALSE if the current page is the first one
+	 */
+	protected $_first_page;
+
+	/**
+	 * @var integer|boolean Last page number, sets in FALSE if the current page is the last one
+	 */
+	protected $_last_page;
+
+	/**
+	 * @var integer Query offset
+	 */
+	protected $_offset;
+
+	/**
+	 * Create new object instance.
+	 * 
+	 * @param  integer      $total_items  Total number of items in the list
+	 * @param  string|NULL  $config_group Name of config group
+	 * @param  Request|NULL $request      HTTP request
+	 * @return Pagination
+	 */
+	public static function factory($total_items, $config_group = NULL, Request $request = NULL)
 	{
-		// Load the pagination config file
-		$config_file = Kohana::$config->load('pagination');
-
-		// Initialize the $config array
-		$config['group'] = (string) $group;
-
-		// Recursively load requested config groups
-		while (isset($config['group']) AND isset($config_file->$config['group']))
+		if ($config_group === NULL)
 		{
-			// Temporarily store config group name
-			$group = $config['group'];
-			unset($config['group']);
-
-			// Add config group values, not overwriting existing keys
-			$config += $config_file->$group;
+			$config_group = Pagination::$default;
 		}
 
-		// Get rid of possible stray config group names
-		unset($config['group']);
+		if ($request === NULL)
+		{
+			$request = Request::initial();
+		}
 
-		// Return the merged config group settings
-		return $config;
+		return new Pagination($total_items, $config_group, $request);
 	}
 
 	/**
-	 * Loads configuration settings into the object and (re)calculates pagination if needed.
-	 * Allows you to update config settings after a Pagination object has been constructed.
-	 *
-	 * @param   array   configuration
-	 * @return  object  Pagination
+	 * Initializes base properties.
+	 * 
+	 * @param  integer $total_items  Total items in list
+	 * @param  string  $config_group Name of config group 
+	 * @param  Request $request      HTTP request
+	 * @return void
 	 */
-	public function setup(array $config = array())
+	protected function __construct($total_items, $config_group, Request $request)
 	{
-		if (isset($config['group']))
+		// Load config group
+		$config = Kohana::$config->load('pagination')->get($config_group);
+		// If group not exist, throw exception
+		if ($config === NULL)
 		{
-			// Recursively load requested config groups
-			$config += $this->config_group($config['group']);
+			throw new Kohana_Exception(
+				':method: config group `pagination.:group` does not exist',
+				array(':method' => __METHOD__, ':group' => $config_group)
+			);
+		}
+		// Merge base and group configs
+		$this->_config = array_merge($this->_config, $config);
+
+		// 
+		$query  = $request->query();
+		$params = $request->param();
+
+		// 
+		$params['directory']  = strtolower($request->directory());
+		$params['controller'] = strtolower($request->controller());
+		$params['action']     = strtolower($request->action());
+
+		$page_key = $this->_config['page']['key'];
+
+		if ($this->_config['page']['source'] == 'query')
+		{
+			$this->_current_page = $request->query($page_key);
+			$query[$page_key] = Pagination::PAGE_MARKER;
+		}
+		else
+		{
+			$this->_current_page = $request->param($page_key);
+			$params[$page_key] = Pagination::PAGE_MARKER;
 		}
 
-		// Overwrite the current config settings
-		$this->config = $config + $this->config;
+		// Create pattern to quickly generating links
+		$this->url_pattern = $request->route()->uri($params).URL::query($query, FALSE);
 
-		// Only (re)calculate pagination when needed
-		if ($this->current_page === NULL
-			OR isset($config['current_page'])
-			OR isset($config['total_items'])
-			OR isset($config['items_per_page']))
+		// Create link for for extra case: first page not displayed
+		if ( ! $this->_config['first_page_in_url'])
 		{
-			// Retrieve the current page number
-			if ( ! empty($this->config['current_page']['page']))
+			if ($this->_config['page']['source'] == 'query')
 			{
-				// The current page number has been set manually
-				$this->current_page = (int) $this->config['current_page']['page'];
+				unset($query[$page_key]);
 			}
 			else
 			{
-				switch ($this->config['current_page']['source'])
-				{
-					case 'query_string':
-					case 'mixed':
-						$this->current_page = isset($_GET[$this->config['current_page']['key']])
-							? (int) $_GET[$this->config['current_page']['key']]
-							: 1;
-						break;
-
-					case 'route':
-						$this->current_page = (int) Request::current()->param($this->config['current_page']['key'], 1);
-						break;
-				}
+				unset($params[$page_key]);
 			}
-
-			// Calculate and clean all pagination variables
-			$this->total_items        = (int) max(0, $this->config['total_items']);
-			$this->items_per_page     = (int) max(1, $this->config['items_per_page']);
-			$this->total_pages        = (int) ceil($this->total_items / $this->items_per_page);
-			$this->current_page       = (int) min(max(1, $this->current_page), max(1, $this->total_pages));
-			$this->current_first_item = (int) min((($this->current_page - 1) * $this->items_per_page) + 1, $this->total_items);
-			$this->current_last_item  = (int) min($this->current_first_item + $this->items_per_page - 1, $this->total_items);
-			$this->previous_page      = ($this->current_page > 1) ? $this->current_page - 1 : FALSE;
-			$this->next_page          = ($this->current_page < $this->total_pages) ? $this->current_page + 1 : FALSE;
-			$this->first_page         = ($this->current_page === 1) ? FALSE : 1;
-			$this->last_page          = ($this->current_page >= $this->total_pages) ? FALSE : $this->total_pages;
-			$this->offset             = (int) (($this->current_page - 1) * $this->items_per_page);
+			$this->url_first_page = $request->route()->uri($params).URL::query($query, FALSE);
 		}
 
-		// Chainable method
-		return $this;
+		// Calculate pagination properties
+		$this->_total_items    = max(0, (int) $total_items);
+		$this->_items_per_page = max(1, (int) $this->_config['items_per_page']);
+		$this->_total_pages    = max(1, ceil($this->_total_items / $this->_items_per_page));
+		$this->_current_page   = min(max(1, (int) $this->_current_page), $this->_total_pages);
+		$this->_previous_page  = $this->_current_page > 1 ? $this->_current_page - 1 : FALSE;
+		$this->_next_page      = $this->_current_page < $this->_total_pages ? $this->_current_page + 1 : FALSE;
+		$this->_first_page     = $this->_current_page == 1 ? FALSE : 1;
+		$this->_last_page      = $this->_current_page >= $this->_total_pages ? FALSE : $this->_total_pages;
+		$this->_offset         = ($this->_current_page - 1) * $this->_items_per_page;
 	}
 
 	/**
-	 * Generates the full URL for a certain page.
+	 * Generates link for page.
 	 *
-	 * @param   integer  page number
-	 * @return  string   page URL
+	 * @param  integer $page Page number
+	 * @return string
 	 */
 	public function url($page = 1)
 	{
 		// Clean the page number
-		$page = max(1, (int) $page);
+		$page = min($this->_total_pages, max(1, (int) $page));
 
-		// No page number in URLs to first page
-		if ($page === 1 AND ! $this->config['first_page_in_url'])
+		if ($page == 1 AND ! $this->_config['first_page_in_url'])
 		{
-			$page = NULL;
+			// Not page number in URI to first page
+			return $this->url_first_page;
 		}
 
-		switch ($this->config['current_page']['source'])
-		{
-			case 'query_string':
-        return URL::site(Request::current()->uri()).URL::query(array($this->config['current_page']['key'] => $page));
-
-			case 'route':
-				return URL::site(Request::current()->route()->uri(array($this->config['current_page']['key'] => $page))).URL::query();
-
-			case 'mixed':
-			    return URL::site(Request::detect_uri()).URL::query(array($this->config['current_page']['key'] => $page));
-		}
-
-		return '#';
+		// Substitutes the page number in pattern
+		return str_replace(Pagination::PAGE_MARKER, $page, $this->url_pattern);
 	}
 
 	/**
 	 * Checks whether the given page number exists.
 	 *
-	 * @param   integer  page number
-	 * @return  boolean
-	 * @since   3.0.7
+	 * @param  integer $page Page number
+	 * @return boolean
 	 */
 	public function valid_page($page)
 	{
-		// Page number has to be a clean integer
-		if ( ! Validate::digit($page))
-			return FALSE;
-
-		return $page > 0 AND $page <= $this->total_pages;
+		return Valid::digit($page) AND $page > 0 AND $page <= $this->_total_pages;
 	}
 
 	/**
-	 * Renders the pagination links.
-	 *
-	 * @param   mixed   string of the view to use, or a Kohana_View object
-	 * @return  string  pagination output (HTML)
+	 * Return compiled the HTML code of pagination links.
+	 * 
+	 * @param  string|NULL $view Filename
+	 * @return string
 	 */
 	public function render($view = NULL)
 	{
 		// Automatically hide pagination whenever it is superfluous
-		if ($this->config['auto_hide'] === TRUE AND $this->total_pages <= 1)
+		if ($this->_config['auto_hide'] === TRUE AND $this->_total_pages <= 1)
+		{
 			return '';
+		}
 
 		if ($view === NULL)
 		{
-			// Use the view from config
-			$view = $this->config['view'];
+			// Use default filename
+			$view = $this->_config['view'];
 		}
 
-		if ( ! $view instanceof Kohana_View)
-		{
-			// Load the view file
-			$view = View::factory($view);
-		}
-
-		// Pass on the whole Pagination object
-		return $view->set(get_object_vars($this))->set('page', $this)->render();
+		// Create and compile pagination [View]
+		return View::factory($view, array('kpagination' => $this))->render();
 	}
 
 	/**
-	 * Renders the pagination links.
+	 * Returns property value.
 	 *
-	 * @return  string  pagination output (HTML)
+	 * @param  string $key     Property name
+	 * @param  mixed  $default Returned if the value is not found
+	 * @return mixed
+	 */
+	public function get($key, $default = NULL)
+	{
+		// Add 'protected' prefix 
+		$key = '_'.$key;
+
+		return isset($this->$key) ? $this->$key : $default;
+	}
+
+	/**
+	 * Get config value.
+	 *
+	 * @param  string $key     Option name
+	 * @param  mixed  $default Returned if the value is not found
+	 * @return mixed
+	 */
+	public function config($key, $default = NULL)
+	{
+		return isset($this->_config[$key]) ? $this->_config[$key] : $default;
+	}
+
+	/**
+	 * Renders and returns the HTML code of pagination links.
+	 *
+	 * @return string
 	 */
 	public function __toString()
 	{
@@ -264,26 +278,14 @@ class Kohana_Pagination {
 	}
 
 	/**
-	 * Returns a Pagination property.
+	 * 'Magical' version of property getter.
 	 *
-	 * @param   string  URI of the request
-	 * @return  mixed   Pagination property; NULL if not found
+	 * @param  string $key Property name
+	 * @return mixed
 	 */
 	public function __get($key)
 	{
-		return isset($this->$key) ? $this->$key : NULL;
+		return $this->get($key);
 	}
 
-	/**
-	 * Updates a single config setting, and recalculates pagination if needed.
-	 *
-	 * @param   string  config key
-	 * @param   mixed   config value
-	 * @return  void
-	 */
-	public function __set($key, $value)
-	{
-		$this->setup(array($key => $value));
-	}
-
-} // End Pagination
+}

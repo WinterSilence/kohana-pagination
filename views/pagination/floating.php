@@ -1,33 +1,32 @@
-<?php
-/*
-	First Previous 1 2 3 ... 22 23 24 25 26 [27] 28 29 30 31 32 ... 48 49 50 Next Last
+<?php defined('SYSPATH') OR die('No direct script access.');
+/**
+ * First Previous 1 2 3 ... 26 [27] 28 ... 48 49 50 Next Last
 */
-
 // Number of page links in the begin and end of whole range
-$count_out = ( ! empty($config['count_out'])) ? (int) $config['count_out'] : 3;
+$count_out = $kpagination->config('count_out', 3);
 // Number of page links on each side of current page
-$count_in = ( ! empty($config['count_in'])) ? (int) $config['count_in'] : 5;
+$count_in = $kpagination->config('count_in', 5);
 
-// Beginning group of pages: $n1...$n2
+// Beginning group of pages: $n1 ... $n2
 $n1 = 1;
-$n2 = min($count_out, $total_pages);
+$n2 = min($count_out, $kpagination->total_pages);
 
-// Ending group of pages: $n7...$n8
-$n7 = max(1, $total_pages - $count_out + 1);
-$n8 = $total_pages;
+// Ending group of pages: $n7 ... $n8
+$n7 = max(1, $kpagination->total_pages - $count_out + 1);
+$n8 = $kpagination->total_pages;
 
-// Middle group of pages: $n4...$n5
-$n4 = max($n2 + 1, $current_page - $count_in);
-$n5 = min($n7 - 1, $current_page + $count_in);
+// Middle group of pages: $n4 ... $n5
+$n4 = max($n2 + 1, $kpagination->current_page - $count_in);
+$n5 = min($n7 - 1, $kpagination->current_page + $count_in);
 $use_middle = ($n5 >= $n4);
 
 // Point $n3 between $n2 and $n4
 $n3 = (int) (($n2 + $n4) / 2);
-$use_n3 = ($use_middle && (($n4 - $n2) > 1));
+$use_n3 = ($use_middle AND (($n4 - $n2) > 1));
 
 // Point $n6 between $n5 and $n7
 $n6 = (int) (($n5 + $n7) / 2);
-$use_n6 = ($use_middle && (($n7 - $n5) > 1));
+$use_n6 = ($use_middle AND (($n7 - $n5) > 1));
 
 // Links to display as array(page => content)
 $links = array();
@@ -53,42 +52,41 @@ for ($i = $n7; $i <= $n8; $i++)
 {
 	$links[$i] = $i;
 }
-
 ?>
-<p class="pagination">
+<ul class="pagination <?php echo $kpagination->config('class') ?>">
 
-	<?php if ($first_page !== FALSE): ?>
-		<a href="<?php echo HTML::chars($page->url($first_page)) ?>" rel="first"><?php echo __('First') ?></a>
-	<?php else: ?>
-		<?php echo __('First') ?>
-	<?php endif ?>
+<?php if ($kpagination->first_page !== FALSE): ?>
+	<li><?php echo HTML::anchor($kpagination->url($kpagination->first_page), __('First')) ?></li>
+<?php else: ?>
+	<li class="disabled"><span><?php echo __('First') ?></span></li>
+<?php endif ?>
 
-	<?php if ($previous_page !== FALSE): ?>
-		<a href="<?php echo HTML::chars($page->url($previous_page)) ?>" rel="prev"><?php echo __('Previous') ?></a>
-	<?php else: ?>
-		<?php echo __('Previous') ?>
-	<?php endif ?>
+<?php if ($kpagination->previous_page !== FALSE): ?>
+	<li><?php echo HTML::anchor($kpagination->url($kpagination->previous_page), __('Previous')) ?></li>
+<?php else: ?>
+	<li class="disabled"><span><?php echo __('Previous') ?></span></li>
+<?php endif ?>
 
-	<?php foreach ($links as $number => $content): ?>
+<?php foreach ($links as $i => $num): ?>
 
-		<?php if ($number === $current_page): ?>
-			<strong><?php echo $content ?></strong>
-		<?php else: ?>
-			<a href="<?php echo HTML::chars($page->url($number)) ?>"><?php echo $content ?></a>
-		<?php endif ?>
+<?php if ($i == $kpagination->current_page): ?>
+	<li class="active"><span><?php echo $num ?></span></li>
+<?php else: ?>
+	<li><?php echo HTML::anchor($kpagination->url($i), $num) ?></li>
+<?php endif ?>
 
-	<?php endforeach ?>
+<?php endforeach ?>
 
-	<?php if ($next_page !== FALSE): ?>
-		<a href="<?php echo HTML::chars($page->url($next_page)) ?>" rel="next"><?php echo __('Next') ?></a>
-	<?php else: ?>
-		<?php echo __('Next') ?>
-	<?php endif ?>
+<?php if ($kpagination->next_page !== FALSE): ?>
+	<li><?php echo HTML::anchor($kpagination->url($kpagination->next_page), __('Next')) ?></li>
+<?php else: ?>
+	<li class="disabled"><span><?php echo __('Next') ?></span></li>
+<?php endif ?>
 
-	<?php if ($last_page !== FALSE): ?>
-		<a href="<?php echo HTML::chars($page->url($last_page)) ?>" rel="last"><?php echo __('Last') ?></a>
-	<?php else: ?>
-		<?php echo __('Last') ?>
-	<?php endif ?>
+<?php if ($kpagination->last_page !== FALSE): ?>
+	<li><?php echo HTML::anchor($kpagination->url($kpagination->last_page), __('Last')) ?></li>
+<?php else: ?>
+	<li class="disabled"><span><?php echo __('Last') ?></span></li>
+<?php endif ?>
 
-</p><!-- .pagination -->
+</ul>
